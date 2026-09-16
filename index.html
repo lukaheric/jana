@@ -1,0 +1,1164 @@
+<!doctype html>
+<html lang="sl">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Jana ❤️</title>
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.29.0/dist/ort.min.js"></script>
+    <style>
+        :root {
+            color-scheme: light;
+            font-family: Inter, "Segoe UI", system-ui, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100svh;
+            display: grid;
+            place-items: center;
+            overflow-x: hidden;
+            color: #6d1737;
+            background:
+                    radial-gradient(circle at 20% 10%, #ffdce8 0, transparent 35%),
+                    radial-gradient(circle at 85% 85%, #ffc4d8 0, transparent 38%),
+                    linear-gradient(145deg, #fff7fa, #ffe8f0);
+        }
+
+        .screen {
+            width: min(92vw, 820px);
+            text-align: center;
+        }
+
+        #login {
+            padding: 42px 28px;
+            border: 1px solid rgba(160, 31, 80, .13);
+            border-radius: 28px;
+            background: rgba(255, 255, 255, .82);
+            box-shadow: 0 22px 70px rgba(132, 29, 68, .14);
+            backdrop-filter: blur(18px);
+        }
+
+        #login h1 {
+            margin: 0 0 24px;
+            font-size: clamp(36px, 9vw, 58px);
+            letter-spacing: -1px;
+        }
+
+        #password {
+            width: min(260px, 100%);
+            padding: 13px 16px;
+            border: 2px solid #efb0c8;
+            border-radius: 16px;
+            outline: none;
+            background: white;
+            color: #6d1737;
+            font-size: 26px;
+            letter-spacing: 8px;
+            text-align: center;
+        }
+
+        #password:focus {
+            border-color: #c93670;
+        }
+
+        button {
+            display: block;
+            margin: 18px auto 0;
+            padding: 13px 28px;
+            border: 0;
+            border-radius: 999px;
+            background: #c93670;
+            color: white;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            opacity: .55;
+            cursor: default;
+        }
+
+        #wrongPassword {
+            min-height: 22px;
+            margin-top: 13px;
+            color: #a92d5b;
+            font-size: 14px;
+        }
+
+        #app {
+            display: none;
+            width: min(96vw, 920px);
+            min-height: 94svh;
+            padding: 20px 0 48px;
+        }
+
+        #cameraWrap {
+            width: min(90vw, 520px);
+            margin: 0 auto;
+            overflow: hidden;
+            border-radius: 26px;
+            background: #2b1720;
+            box-shadow: 0 18px 55px rgba(103, 24, 55, .18);
+            transition: opacity .7s ease, transform .7s ease, max-height .7s ease, margin .7s ease;
+            max-height: 720px;
+        }
+
+        #cameraWrap.hidden {
+            opacity: 0;
+            transform: scale(.92);
+            max-height: 0;
+            margin: 0 auto;
+        }
+
+        #video {
+            display: block;
+            width: 100%;
+            height: auto;
+            transform: scaleX(-1);
+        }
+
+        #status {
+            min-height: 26px;
+            margin-top: 14px;
+            font-size: 15px;
+            opacity: .76;
+        }
+
+        #status.loading::after {
+            content: "";
+            display: inline-block;
+            width: 1.2em;
+            text-align: left;
+            animation: dots 1.2s steps(4, end) infinite;
+            vertical-align: bottom;
+        }
+
+        #love {
+            display: none;
+            margin-top: 18px;
+            animation: appear .7s ease both;
+        }
+
+        #hero {
+            position: relative;
+            width: min(76vw, 420px);
+            margin: 0 auto;
+        }
+
+        #heartCanvas {
+            display: block;
+            width: min(76vw, 420px);
+            height: min(76vw, 420px);
+            margin: 0 auto;
+            filter: drop-shadow(0 18px 30px rgba(177, 30, 85, .25));
+        }
+
+        .floating-heart {
+            position: absolute;
+            font-size: clamp(18px, 4vw, 34px);
+            opacity: 0;
+            animation: floatHeart 4s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        .floating-heart:nth-child(2) { left: 6%; top: 15%; animation-delay: .2s; }
+        .floating-heart:nth-child(3) { right: 8%; top: 8%; animation-delay: 1.1s; }
+        .floating-heart:nth-child(4) { left: 14%; bottom: 15%; animation-delay: 1.8s; }
+        .floating-heart:nth-child(5) { right: 10%; bottom: 18%; animation-delay: .8s; }
+        .floating-heart:nth-child(6) { left: 48%; top: -2%; animation-delay: 2.3s; }
+
+        #messageBox {
+            width: min(94vw, 760px);
+            margin: 20px auto 0;
+            padding: 18px 24px;
+            border-radius: 26px;
+            background: rgba(255,255,255,.68);
+            box-shadow: 0 16px 40px rgba(132, 29, 68, .10);
+        }
+
+        #messageTitle {
+            font-size: 14px;
+            opacity: .6;
+            text-transform: uppercase;
+            letter-spacing: .18em;
+            margin-bottom: 8px;
+        }
+
+        #message {
+            overflow-wrap: anywhere;
+            font-size: clamp(24px, 5.5vw, 40px);
+            font-weight: 800;
+            line-height: 1.26;
+            min-height: 2.7em;
+        }
+
+        #letterStage {
+            display: none;
+            width: min(94vw, 820px);
+            margin: 26px auto 0;
+            perspective: 1400px;
+            animation: appear .8s ease both;
+            min-height: 470px;
+            transition: min-height .35s ease;
+        }
+
+        #envelope {
+            position: relative;
+            width: min(92vw, 760px);
+            margin: 190px auto 0;
+            height: 240px;
+            transform-style: preserve-3d;
+        }
+
+        #envelopeBack {
+            position: absolute;
+            inset: 54px 0 0 0;
+            background: linear-gradient(180deg, #f8d8e3 0%, #f6c7d7 100%);
+            border-radius: 0 0 22px 22px;
+            box-shadow: 0 18px 45px rgba(132, 29, 68, .18);
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        #envelopeFront {
+            position: absolute;
+            inset: 54px 0 0 0;
+            background: linear-gradient(180deg, #f2bfd1 0%, #efadc5 100%);
+            clip-path: polygon(0 0, 50% 62%, 100% 0, 100% 100%, 0 100%);
+            border-radius: 0 0 22px 22px;
+            z-index: 4;
+        }
+
+        #flap {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            height: 150px;
+            background: linear-gradient(180deg, #ffdbe8 0%, #f7c6d6 100%);
+            clip-path: polygon(0 0, 100% 0, 50% 100%);
+            transform-origin: 50% 0;
+            transform: rotateX(0deg);
+            backface-visibility: hidden;
+            transition: transform .9s cubic-bezier(.2,.75,.25,1), z-index 0s .9s;
+            z-index: 5;
+            box-shadow: 0 6px 24px rgba(132, 29, 68, .08);
+        }
+
+        #letterPaper {
+            position: absolute;
+            left: 50%;
+            top: 78px;
+            width: min(88vw, 700px);
+            transform: translateX(-50%) translateY(92px) scale(.97);
+            transform-origin: 50% 100%;
+            padding: 34px 34px 38px;
+            border-radius: 18px;
+            background: linear-gradient(180deg, #fffdfd, #fff7fa);
+            color: #6f2140;
+            text-align: left;
+            box-shadow: 0 20px 55px rgba(132, 29, 68, .17);
+            z-index: 3;
+            opacity: .98;
+            transition: transform 1.15s cubic-bezier(.18,.75,.22,1), opacity .7s ease, box-shadow .8s ease;
+        }
+
+        #letterStage.open #flap {
+            transform: rotateX(180deg);
+            z-index: 0;
+        }
+
+        #letterStage.paper-out #letterPaper {
+            transform: translateX(-50%) translateY(-245px) scale(1);
+            opacity: 1;
+            z-index: 6;
+            box-shadow: 0 24px 70px rgba(132, 29, 68, .2);
+        }
+
+        #letterHeading {
+            text-align: center;
+            font-size: clamp(24px, 4vw, 34px);
+            margin-bottom: 18px;
+            font-weight: 700;
+            color: #bb396e;
+            letter-spacing: .02em;
+        }
+
+        #letterLoading {
+            display: none;
+            margin: 18px auto 0;
+            font-size: 15px;
+            opacity: .62;
+            text-align: center;
+        }
+
+        #letterLoading::after {
+            content: "";
+            display: inline-block;
+            width: 1.2em;
+            text-align: left;
+            animation: dots 1.2s steps(4, end) infinite;
+            vertical-align: bottom;
+        }
+
+        #letterSignature {
+            margin-top: 28px;
+            text-align: right;
+            font-family: "Brush Script MT", "Segoe Script", "Lucida Handwriting", cursive;
+            font-size: clamp(26px, 4vw, 36px);
+            color: #9f2f5f;
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity .7s ease, transform .7s ease;
+        }
+
+        #letterSignature.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        #letterText {
+            min-height: 220px;
+            font-family: "Brush Script MT", "Segoe Script", "Lucida Handwriting", cursive;
+            font-size: clamp(24px, 3.7vw, 35px);
+            line-height: 1.42;
+            white-space: pre-wrap;
+            letter-spacing: .01em;
+        }
+
+        canvas.hiddenCanvas {
+            display: none;
+        }
+
+        @keyframes appear {
+            from {
+                opacity: 0;
+                transform: translateY(14px) scale(.97);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes dots {
+            0% { content: ""; }
+            25% { content: "."; }
+            50% { content: ".."; }
+            75% { content: "..."; }
+            100% { content: ""; }
+        }
+
+        @keyframes floatHeart {
+            0% {
+                transform: translateY(18px) scale(.8);
+                opacity: 0;
+            }
+            20% {
+                opacity: .9;
+            }
+            50% {
+                transform: translateY(-6px) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-28px) scale(1.1);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+<section id="login" class="screen">
+    <h1>Jana ❤️</h1>
+    <input id="password" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="••••">
+    <button id="enterButton">Naprej</button>
+    <div id="wrongPassword"></div>
+</section>
+
+<main id="app" class="screen">
+    <div id="cameraWrap">
+        <video id="video" autoplay muted playsinline></video>
+    </div>
+    <div id="status"></div>
+
+    <section id="love">
+        <div id="hero">
+            <canvas id="heartCanvas" width="420" height="420"></canvas>
+            <div class="floating-heart">❤️</div>
+            <div class="floating-heart">❤️</div>
+            <div class="floating-heart">❤️</div>
+            <div class="floating-heart">❤️</div>
+            <div class="floating-heart">❤️</div>
+        </div>
+
+        <div id="messageBox">
+            <div id="messageTitle"></div>
+            <div id="message"></div>
+        </div>
+
+        <div id="letterLoading">Pismo se nalaga</div>
+
+        <div id="letterStage">
+            <div id="envelope">
+                <div id="flap"></div>
+                <div id="envelopeBack"></div>
+                <div id="letterPaper">
+                    <div id="letterHeading">Prečudovita Jana️</div>
+                    <div id="letterText"></div>
+                    <div id="letterSignature">Tvoj Luka ❤️</div>
+                </div>
+                <div id="envelopeFront"></div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<canvas id="detectorCanvas" class="hiddenCanvas" width="640" height="640"></canvas>
+<canvas id="alignedCanvas" class="hiddenCanvas" width="112" height="112"></canvas>
+<canvas id="frameCanvas" class="hiddenCanvas"></canvas>
+
+<script>
+    const PASSWORD = "1826";
+    const LETTER_TEXT = 'Danes so že trije meseci naokoli, pa mi je nekak spet ratalo, da me ravno danes ni doma. Bi pa reko, da sem se v tem času, čeprav ne vem točno kak, še bolj zaljubil v tebe.\n\nNo pa da dam malo povzetka, ko sva bila skupaj v Nemčiji sem res zelo užival in se mogoče celo malo preveč razvadil na toliko druženja s tabo. Vem da tega ti nisem omenjal, ampak res velko mi je pomenlo tudi, ko si sama predlagala, da bi šel z vama z Izidorjem, pa da si potem šla z nama z Matejem v Nemčijo in da si pripravljena it z mano na Stol.\n\nNasploh se mi zdi, da sva se ta mesec kar zbližala, pa tudi to, da si mi začela bolj zaupat, mi res ogromno pomeni. Vesel sem za ta mesec in vse, kar sva doživela skupaj. Edino zadnja dva tedna sta malo taka, ker sem v Nemčiji, ampak mi to samo še bol da vedet, kako zelo polepšaš življenje, ko sem v enakem mestu kot ti, tako da zdaj praktično zavidam vsem prebivalcem Maribora. Ampak ja, brez tebe verjetno ne bi šel v Nemčijo z Matejem. Pa nasploh bi se manj spravil preizkušat nove stvari, ala igrat karte, ki jih zdaj, ko si me jih naučila, zelo rad igram. Samo pri lažnivcu bom še mogo ugotovit, kako te razbrat, samo se znaš kr dobro napravit, pa še potem me pogled na tebe kr onesposobi za branje tebe. Tak da hvala, da izboljšuješ moje življenje.';    const REQUIRED_MATCHES = 3;
+    const MAX_MISSES = 2;
+    const SCAN_INTERVAL_MS = 600;
+    const ZELO_INTERVAL_MS = 700;
+    const LETTER_TRIGGER_ZELOS = 10;
+    const TYPING_INTERVAL_MS = 32;
+    const DETECTOR_SIDE = 640;
+    const DETECTOR_STRIDES = [8, 16, 32];
+    const SFACE_SIDE = 112;
+    const SFACE_REFERENCE = [
+        [38.2946, 51.6963],
+        [73.5318, 51.5014],
+        [56.0252, 71.7366],
+        [41.5493, 92.3655],
+        [70.7299, 92.2041]
+    ];
+
+    const login = document.getElementById("login");
+    const app = document.getElementById("app");
+    const password = document.getElementById("password");
+    const enterButton = document.getElementById("enterButton");
+    const wrongPassword = document.getElementById("wrongPassword");
+    const video = document.getElementById("video");
+    const cameraWrap = document.getElementById("cameraWrap");
+    const status = document.getElementById("status");
+    const love = document.getElementById("love");
+    const heartCanvas = document.getElementById("heartCanvas");
+    const heartCtx = heartCanvas.getContext("2d");
+    const message = document.getElementById("message");
+    const letterStage = document.getElementById("letterStage");
+    const letterLoading = document.getElementById("letterLoading");
+    const letterText = document.getElementById("letterText");
+    const letterSignature = document.getElementById("letterSignature");
+    const detectorCanvas = document.getElementById("detectorCanvas");
+    const detectorCtx = detectorCanvas.getContext("2d", { willReadFrequently: true });
+    const alignedCanvas = document.getElementById("alignedCanvas");
+    const alignedCtx = alignedCanvas.getContext("2d", { willReadFrequently: true });
+    const frameCanvas = document.getElementById("frameCanvas");
+    const frameCtx = frameCanvas.getContext("2d", { willReadFrequently: true });
+
+    let model = null;
+    let yunetSession = null;
+    let sfaceSession = null;
+    let scanning = false;
+    let scanTimer = null;
+    let matchStreak = 0;
+    let missStreak = 0;
+    let visible = false;
+    let zeloCount = 0;
+    let zeloTimer = null;
+    let typingTimer = null;
+    let streamRef = null;
+    let frameTransform = null;
+    let letterShown = false;
+
+    function setLoading(text) {
+        status.textContent = text;
+        status.classList.add("loading");
+    }
+
+    function clearLoading() {
+        status.textContent = "";
+        status.classList.remove("loading");
+    }
+
+    function clamp(x, lo, hi) {
+        return Math.max(lo, Math.min(hi, x));
+    }
+
+    async function fetchQuiet(url, label, timeoutMs) {
+        setLoading(label);
+
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+        try {
+            const response = await fetch(url, {
+                cache: "force-cache",
+                signal: controller.signal
+            });
+
+            if (!response.ok) {
+                throw new Error(`${label}: HTTP ${response.status}`);
+            }
+
+            return new Uint8Array(await response.arrayBuffer());
+        } catch (err) {
+            if (err.name === "AbortError") {
+                throw new Error(`${label} se predolgo nalaga`);
+            }
+
+            throw err;
+        } finally {
+            clearTimeout(timeout);
+        }
+    }
+
+    async function loadRuntimeAndModels() {
+        if (typeof ort === "undefined" || !ort.InferenceSession) {
+            throw new Error("ONNX Runtime Web se ni naložil");
+        }
+
+        ort.env.wasm.numThreads = 1;
+        ort.env.wasm.proxy = false;
+        ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.29.0/dist/";
+
+        setLoading("Pripravljam presenečenje");
+
+        const modelResponse = await fetch("./model.json", {
+            cache: "no-cache"
+        });
+
+        if (!modelResponse.ok) {
+            throw new Error(`model.json: HTTP ${modelResponse.status}`);
+        }
+
+        model = await modelResponse.json();
+
+        if (model.format !== "SFACE_TARGET_V1") {
+            throw new Error(`Napačen model format: ${model.format}`);
+        }
+
+        model.targetEmbeddings = model.targetEmbeddings.map(x => Float32Array.from(x));
+
+        const yunetBytes = await fetchQuiet(
+            `./${model.yunetModel}`,
+            "Nalagam presenečenje",
+            30000
+        );
+
+        setLoading("Še malo");
+
+        yunetSession = await ort.InferenceSession.create(yunetBytes, {
+            executionProviders: ["wasm"],
+            graphOptimizationLevel: "all"
+        });
+
+        const sfaceBytes = await fetchQuiet(
+            `./${model.sfaceModel}`,
+            "Skoraj pripravljeno",
+            120000
+        );
+
+        sfaceSession = await ort.InferenceSession.create(sfaceBytes, {
+            executionProviders: ["wasm"],
+            graphOptimizationLevel: "all"
+        });
+
+        const yunetWarmup = new ort.Tensor(
+            "float32",
+            new Float32Array(1 * 3 * DETECTOR_SIDE * DETECTOR_SIDE),
+            [1, 3, DETECTOR_SIDE, DETECTOR_SIDE]
+        );
+
+        await yunetSession.run({
+            [yunetSession.inputNames[0]]: yunetWarmup
+        });
+
+        const sfaceWarmup = new ort.Tensor(
+            "float32",
+            new Float32Array(1 * 3 * SFACE_SIDE * SFACE_SIDE),
+            [1, 3, SFACE_SIDE, SFACE_SIDE]
+        );
+
+        await sfaceSession.run({
+            [sfaceSession.inputNames[0]]: sfaceWarmup
+        });
+    }
+
+    function prepareDetectorFrame() {
+        const vw = video.videoWidth;
+        const vh = video.videoHeight;
+        const scale = Math.min(DETECTOR_SIDE / vw, DETECTOR_SIDE / vh);
+        const dw = vw * scale;
+        const dh = vh * scale;
+        const ox = (DETECTOR_SIDE - dw) * 0.5;
+        const oy = (DETECTOR_SIDE - dh) * 0.5;
+
+        detectorCtx.fillStyle = "black";
+        detectorCtx.fillRect(0, 0, DETECTOR_SIDE, DETECTOR_SIDE);
+        detectorCtx.drawImage(video, ox, oy, dw, dh);
+
+        frameCanvas.width = vw;
+        frameCanvas.height = vh;
+        frameCtx.drawImage(video, 0, 0, vw, vh);
+
+        frameTransform = {
+            scale,
+            ox,
+            oy,
+            videoWidth: vw,
+            videoHeight: vh
+        };
+    }
+
+    function detectorTensor() {
+        const image = detectorCtx.getImageData(0, 0, DETECTOR_SIDE, DETECTOR_SIDE);
+        const pixels = DETECTOR_SIDE * DETECTOR_SIDE;
+        const input = new Float32Array(3 * pixels);
+
+        for (let i = 0, p = 0; i < pixels; i++, p += 4) {
+            input[i] = image.data[p + 2];
+            input[pixels + i] = image.data[p + 1];
+            input[pixels * 2 + i] = image.data[p];
+        }
+
+        return new ort.Tensor("float32", input, [1, 3, DETECTOR_SIDE, DETECTOR_SIDE]);
+    }
+
+    function iou(a, b) {
+        const ax2 = a.x + a.width;
+        const ay2 = a.y + a.height;
+        const bx2 = b.x + b.width;
+        const by2 = b.y + b.height;
+        const x1 = Math.max(a.x, b.x);
+        const y1 = Math.max(a.y, b.y);
+        const x2 = Math.min(ax2, bx2);
+        const y2 = Math.min(ay2, by2);
+        const inter = Math.max(0, x2 - x1) * Math.max(0, y2 - y1);
+        const union = Math.max(0, a.width) * Math.max(0, a.height) + Math.max(0, b.width) * Math.max(0, b.height) - inter;
+        return union > 0 ? inter / union : 0;
+    }
+
+    function nms(faces, threshold, topK) {
+        const sorted = faces.sort((a, b) => b.score - a.score);
+        const kept = [];
+
+        for (const face of sorted) {
+            let suppressed = false;
+
+            for (const chosen of kept) {
+                if (iou(face.box, chosen.box) > threshold) {
+                    suppressed = true;
+                    break;
+                }
+            }
+
+            if (!suppressed) {
+                kept.push(face);
+
+                if (kept.length >= topK) {
+                    break;
+                }
+            }
+        }
+
+        return kept;
+    }
+
+    function postprocessYuNet(outputs) {
+        const faces = [];
+        const scoreThreshold = model.detector.scoreThreshold;
+        const nmsThreshold = model.detector.nmsThreshold;
+        const topK = model.detector.topK;
+
+        for (const stride of DETECTOR_STRIDES) {
+            const cols = DETECTOR_SIDE / stride;
+            const rows = DETECTOR_SIDE / stride;
+            const clsTensor = outputs[`cls_${stride}`];
+            const objTensor = outputs[`obj_${stride}`];
+            const bboxTensor = outputs[`bbox_${stride}`];
+            const kpsTensor = outputs[`kps_${stride}`];
+
+            if (!clsTensor || !objTensor || !bboxTensor || !kpsTensor) {
+                throw new Error(`YuNet output manjka za stride ${stride}`);
+            }
+
+            const cls = clsTensor.data;
+            const obj = objTensor.data;
+            const bbox = bboxTensor.data;
+            const kps = kpsTensor.data;
+
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    const index = row * cols + col;
+                    const clsScore = clamp(Number(cls[index]) || 0, 0, 1);
+                    const objScore = clamp(Number(obj[index]) || 0, 0, 1);
+                    const score = Math.sqrt(clsScore * objScore);
+
+                    if (score < scoreThreshold) {
+                        continue;
+                    }
+
+                    const bo = index * 4;
+                    const cx = (col + bbox[bo]) * stride;
+                    const cy = (row + bbox[bo + 1]) * stride;
+                    const width = Math.exp(bbox[bo + 2]) * stride;
+                    const height = Math.exp(bbox[bo + 3]) * stride;
+
+                    if (!Number.isFinite(cx + cy + width + height) || width <= 0 || height <= 0) {
+                        continue;
+                    }
+
+                    const ko = index * 10;
+                    const landmarks = [];
+
+                    for (let point = 0; point < 5; point++) {
+                        landmarks.push([
+                            (kps[ko + point * 2] + col) * stride,
+                            (kps[ko + point * 2 + 1] + row) * stride
+                        ]);
+                    }
+
+                    faces.push({
+                        score,
+                        box: {
+                            x: cx - width * 0.5,
+                            y: cy - height * 0.5,
+                            width,
+                            height
+                        },
+                        landmarks
+                    });
+                }
+            }
+        }
+
+        return nms(faces, nmsThreshold, topK);
+    }
+
+    async function detectFaces() {
+        const tensor = detectorTensor();
+        const outputs = await yunetSession.run({
+            [yunetSession.inputNames[0]]: tensor
+        });
+
+        return postprocessYuNet(outputs);
+    }
+
+    function similarityTransform(source, destination) {
+        let sx = 0;
+        let sy = 0;
+        let dx = 0;
+        let dy = 0;
+
+        for (let i = 0; i < 5; i++) {
+            sx += source[i][0];
+            sy += source[i][1];
+            dx += destination[i][0];
+            dy += destination[i][1];
+        }
+
+        sx /= 5;
+        sy /= 5;
+        dx /= 5;
+        dy /= 5;
+
+        let numA = 0;
+        let numB = 0;
+        let denom = 0;
+
+        for (let i = 0; i < 5; i++) {
+            const x = source[i][0] - sx;
+            const y = source[i][1] - sy;
+            const u = destination[i][0] - dx;
+            const v = destination[i][1] - dy;
+
+            numA += x * u + y * v;
+            numB += x * v - y * u;
+            denom += x * x + y * y;
+        }
+
+        if (denom < 1e-9) {
+            return [1, 0, 0, 0];
+        }
+
+        const a = numA / denom;
+        const b = numB / denom;
+        const tx = dx - a * sx + b * sy;
+        const ty = dy - b * sx - a * sy;
+
+        return [a, b, tx, ty];
+    }
+
+    function alignFace(face) {
+        const [a, b, tx, ty] = similarityTransform(face.landmarks, SFACE_REFERENCE);
+        alignedCtx.setTransform(1, 0, 0, 1, 0, 0);
+        alignedCtx.fillStyle = "black";
+        alignedCtx.fillRect(0, 0, SFACE_SIDE, SFACE_SIDE);
+        alignedCtx.setTransform(a, b, -b, a, tx, ty);
+        alignedCtx.drawImage(detectorCanvas, 0, 0);
+        alignedCtx.setTransform(1, 0, 0, 1, 0, 0);
+    }
+
+    function sfaceTensor() {
+        const image = alignedCtx.getImageData(0, 0, SFACE_SIDE, SFACE_SIDE);
+        const pixels = SFACE_SIDE * SFACE_SIDE;
+        const input = new Float32Array(3 * pixels);
+
+        for (let i = 0, p = 0; i < pixels; i++, p += 4) {
+            input[i] = image.data[p];
+            input[pixels + i] = image.data[p + 1];
+            input[pixels * 2 + i] = image.data[p + 2];
+        }
+
+        return new ort.Tensor("float32", input, [1, 3, SFACE_SIDE, SFACE_SIDE]);
+    }
+
+    function normalize(vector) {
+        let n2 = 0;
+
+        for (let i = 0; i < vector.length; i++) {
+            n2 += vector[i] * vector[i];
+        }
+
+        const n = Math.sqrt(Math.max(n2, 1e-20));
+        const out = new Float32Array(vector.length);
+
+        for (let i = 0; i < vector.length; i++) {
+            out[i] = vector[i] / n;
+        }
+
+        return out;
+    }
+
+    async function embeddingForFace(face) {
+        alignFace(face);
+
+        const input = sfaceTensor();
+        const outputs = await sfaceSession.run({
+            [sfaceSession.inputNames[0]]: input
+        });
+
+        const output = outputs.fc1 || outputs[sfaceSession.outputNames[0]];
+
+        if (!output || output.data.length !== model.embeddingSize) {
+            throw new Error("Neveljaven SFace output");
+        }
+
+        return normalize(output.data);
+    }
+
+    function dot(a, b) {
+        let s = 0;
+
+        for (let i = 0; i < a.length; i++) {
+            s += a[i] * b[i];
+        }
+
+        return s;
+    }
+
+    function classify(embedding) {
+        const scores = model.targetEmbeddings
+            .map(ref => dot(embedding, ref))
+            .sort((a, b) => b - a);
+
+        const k = Math.min(model.recognition.k, scores.length);
+        let sum = 0;
+
+        for (let i = 0; i < k; i++) {
+            sum += scores[i];
+        }
+
+        const similarity = sum / k;
+
+        return {
+            similarity,
+            match: similarity >= model.recognition.threshold
+        };
+    }
+
+    function detectorFaceToVideo(face) {
+        const { scale, ox, oy, videoWidth, videoHeight } = frameTransform;
+
+        return {
+            x: clamp((face.box.x - ox) / scale, 0, videoWidth),
+            y: clamp((face.box.y - oy) / scale, 0, videoHeight),
+            width: clamp(face.box.width / scale, 0, videoWidth),
+            height: clamp(face.box.height / scale, 0, videoHeight)
+        };
+    }
+
+    function heartPath(ctx, w, h) {
+        const x = w / 2;
+        const y = h * .30;
+
+        ctx.beginPath();
+        ctx.moveTo(x, h * .88);
+        ctx.bezierCurveTo(w * .14, h * .66, w * .03, h * .43, w * .16, h * .24);
+        ctx.bezierCurveTo(w * .29, h * .06, w * .47, h * .13, x, y);
+        ctx.bezierCurveTo(w * .53, h * .13, w * .71, h * .06, w * .84, h * .24);
+        ctx.bezierCurveTo(w * .97, h * .43, w * .86, h * .66, x, h * .88);
+        ctx.closePath();
+    }
+
+    function drawFaceInHeart(face) {
+        const box = detectorFaceToVideo(face);
+        const margin = 1.35;
+        const side = Math.max(box.width, box.height) * margin;
+        const cx = box.x + box.width * .5;
+        const cy = box.y + box.height * .47;
+        const sx = clamp(cx - side * .5, 0, frameCanvas.width);
+        const sy = clamp(cy - side * .5, 0, frameCanvas.height);
+        const ex = clamp(cx + side * .5, 0, frameCanvas.width);
+        const ey = clamp(cy + side * .5, 0, frameCanvas.height);
+        const w = heartCanvas.width;
+        const h = heartCanvas.height;
+
+        heartCtx.clearRect(0, 0, w, h);
+        heartCtx.save();
+        heartPath(heartCtx, w, h);
+        heartCtx.clip();
+        heartCtx.fillStyle = "#f7c5d6";
+        heartCtx.fillRect(0, 0, w, h);
+        heartCtx.drawImage(frameCanvas, sx, sy, ex - sx, ey - sy, 0, 0, w, h);
+        heartCtx.restore();
+
+        heartCtx.save();
+        heartPath(heartCtx, w, h);
+        heartCtx.lineWidth = 9;
+        heartCtx.strokeStyle = "#d62d6a";
+        heartCtx.stroke();
+        heartCtx.restore();
+    }
+
+    function renderMessage() {
+        const parts = Array.from({ length: zeloCount }, () => "zelo").join(" ");
+        message.textContent = `Jaz te imam ${parts} rad ❤️`;
+    }
+
+    function stopCamera() {
+        if (streamRef) {
+            for (const track of streamRef.getTracks()) {
+                track.stop();
+            }
+            streamRef = null;
+        }
+    }
+
+    function startLetter() {
+        if (letterShown) {
+            return;
+        }
+
+        letterShown = true;
+        letterStage.style.display = "block";
+        letterText.textContent = "";
+        letterSignature.classList.remove("show");
+
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                letterStage.classList.add("open");
+            });
+        });
+
+        setTimeout(() => {
+            letterStage.classList.add("paper-out");
+            letterLoading.style.display = "none";
+        }, 850);
+
+        setTimeout(() => {
+            let index = 0;
+
+            clearInterval(typingTimer);
+            typingTimer = setInterval(() => {
+                index++;
+                letterText.textContent = LETTER_TEXT.slice(0, index);
+                letterStage.style.minHeight = `${Math.max(470, letterText.scrollHeight + 330)}px`;
+
+                if (index >= LETTER_TEXT.length) {
+                    clearInterval(typingTimer);
+                    typingTimer = null;
+                    letterSignature.classList.add("show");
+                }
+            }, TYPING_INTERVAL_MS);
+        }, 1550);
+    }
+
+    function showLove(face) {
+        drawFaceInHeart(face);
+
+        if (visible) {
+            return;
+        }
+
+        visible = true;
+        clearInterval(scanTimer);
+        scanTimer = null;
+        scanning = false;
+        stopCamera();
+        cameraWrap.classList.add("hidden");
+        clearLoading();
+        love.style.display = "block";
+        letterLoading.style.display = "block";
+        letterText.textContent = "";
+        letterSignature.classList.remove("show");
+        zeloCount = 1;
+        renderMessage();
+
+        clearInterval(zeloTimer);
+        zeloTimer = setInterval(() => {
+            zeloCount++;
+            renderMessage();
+
+            if (zeloCount >= LETTER_TRIGGER_ZELOS) {
+                startLetter();
+            }
+        }, ZELO_INTERVAL_MS);
+    }
+
+    function registerMiss() {
+        matchStreak = 0;
+        missStreak++;
+
+        if (visible && missStreak > MAX_MISSES) {
+            hideLove();
+        }
+    }
+
+    function hideLove() {
+        visible = false;
+        love.style.display = "none";
+        clearInterval(zeloTimer);
+        clearInterval(typingTimer);
+        zeloTimer = null;
+        typingTimer = null;
+        zeloCount = 0;
+        message.textContent = "";
+        letterLoading.style.display = "none";
+        letterText.textContent = "";
+        letterSignature.classList.remove("show");
+        letterStage.style.display = "none";
+        letterStage.classList.remove("open");
+        letterStage.classList.remove("paper-out");
+        letterStage.style.minHeight = "";
+        letterShown = false;
+        matchStreak = 0;
+        missStreak = 0;
+    }
+
+    async function scanFrame() {
+        if (scanning || !yunetSession || !sfaceSession || video.readyState < 2 || visible) {
+            return;
+        }
+
+        scanning = true;
+
+        try {
+            prepareDetectorFrame();
+            const faces = await detectFaces();
+
+            if (!faces.length) {
+                registerMiss();
+                return;
+            }
+
+            let best = null;
+
+            for (const face of faces) {
+                const embedding = await embeddingForFace(face);
+                const result = classify(embedding);
+
+                if (best === null || result.similarity > best.result.similarity) {
+                    best = {
+                        face,
+                        result
+                    };
+                }
+            }
+
+            if (best.result.match) {
+                matchStreak++;
+                missStreak = 0;
+
+                if (matchStreak >= REQUIRED_MATCHES) {
+                    showLove(best.face);
+                }
+            } else {
+                registerMiss();
+            }
+        } catch (err) {
+            console.error(err);
+            status.textContent = `Napaka: ${err.message ?? err}`;
+            status.classList.remove("loading");
+            registerMiss();
+        } finally {
+            scanning = false;
+        }
+    }
+
+    function startScanning() {
+        clearInterval(scanTimer);
+        scanTimer = setInterval(scanFrame, SCAN_INTERVAL_MS);
+        scanFrame();
+    }
+
+    async function unlock() {
+        if (password.value !== PASSWORD) {
+            wrongPassword.textContent = "Napačno geslo.";
+            password.value = "";
+            password.focus();
+            return;
+        }
+
+        enterButton.disabled = true;
+        wrongPassword.textContent = "";
+        login.style.display = "none";
+        app.style.display = "block";
+
+        try {
+            await loadRuntimeAndModels();
+
+            setLoading("Vklapljam kamero");
+
+            streamRef = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: "user",
+                    width: { ideal: 640 },
+                    height: { ideal: 480 }
+                },
+                audio: false
+            });
+
+            video.srcObject = streamRef;
+            await video.play();
+
+            clearLoading();
+            startScanning();
+        } catch (err) {
+            console.error(err);
+            status.textContent = `Napaka: ${err.message ?? err}`;
+            status.classList.remove("loading");
+            enterButton.disabled = false;
+        }
+    }
+
+    enterButton.addEventListener("click", unlock);
+
+    password.addEventListener("keydown", event => {
+        if (event.key === "Enter") {
+            unlock();
+        }
+    });
+</script>
+</body>
+</html>
